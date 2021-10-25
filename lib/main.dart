@@ -1,0 +1,90 @@
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+import './pages/all_todos.dart';
+import './pages/create_folder.dart';
+import './pages/home.dart';
+import './utils/color_utils.dart';
+import './models/todo.dart';
+import './models/todo_folder.dart';
+import './utils/constants.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // intialize database and adapters
+  await Hive.initFlutter();
+  Hive.registerAdapter(TodoAdapter());
+  Hive.registerAdapter(TodoFolderAdapter());
+  final folders = await Hive.openBox<TodoFolder>(TODOS_FOLDER);
+  // add default folder; all for every instance of the app
+  if (folders.isEmpty) {
+    final todos = await Hive.openBox<Todo>(TODOS);
+    final allTodosFolder = TodoFolder(
+      name: "All",
+      iconDataCodePoint: FontAwesomeIcons.fileAlt.codePoint,
+      todos: HiveList<Todo>(todos),
+      iconColorValue: const Color(0xffda6970).value,
+    );
+    final workTodosFolder = TodoFolder(
+      name: "Work",
+      iconDataCodePoint: FontAwesomeIcons.folderOpen.codePoint,
+      iconColorValue: const Color(0xff52b2ae).value,
+    );
+    folders.add(allTodosFolder);
+    folders.add(workTodosFolder);
+    await todos.close();
+  }
+  // open box lazy
+  await Hive.openLazyBox<Todo>(TODOS);
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Todo App',
+      theme: ThemeData(
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: Colors.blueGrey,
+          accentColor: Colors.green[600],
+          backgroundColor: Colors.white,
+        ),
+        fontFamily: "Roboto",
+        textTheme: const TextTheme(
+          headline1: TextStyle(
+            color: ColorUtils.white,
+            fontSize: 40,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      home: const Home(),
+      onGenerateRoute: (settings) {
+        if (settings.name == AllTodos.routeName) {
+          return PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 300),
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return AllTodos(
+                transitionAnimation: animation,
+              );
+            },
+          );
+        } else if (settings.name == CreateFolder.routeName) {
+          return PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 300),
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return CreateFolder(
+                transitionAnimation: animation,
+              );
+            },
+          );
+        }
+      },
+    );
+  }
+}
