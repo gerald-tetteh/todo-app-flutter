@@ -5,13 +5,14 @@
 */
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_iconpicker/flutter_iconpicker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../widgets/backgound_stack_with_anim.dart';
 import '../utils/color_utils.dart';
 
 class CreateFolder extends StatefulWidget {
-  CreateFolder({
+  const CreateFolder({
     Key? key,
     required this.transitionAnimation,
   }) : super(key: key);
@@ -24,12 +25,7 @@ class CreateFolder extends StatefulWidget {
 }
 
 class _CreateFolderState extends State<CreateFolder> {
-  final headingTween = Tween<Offset>(
-    begin: const Offset(-1, 0),
-    end: const Offset(0, 0),
-  );
-
-  var _selectedColor = ColorUtils.blueGrey;
+  var _selectedColor = ColorUtils.lightGreen;
   var _selectedIcon = FontAwesomeIcons.folderOpen;
   var _folderName = "";
 
@@ -37,7 +33,7 @@ class _CreateFolderState extends State<CreateFolder> {
 
   Future<bool> showColorPickerDialog() async {
     return ColorPicker(
-      onColorChanged: (color) {},
+      onColorChanged: (color) => setState(() => _selectedColor = color),
       color: _selectedColor,
       width: 40,
       height: 40,
@@ -56,6 +52,16 @@ class _CreateFolderState extends State<CreateFolder> {
         ColorPickerType.wheel: false,
       },
     ).showPickerDialog(context);
+  }
+
+  Future<void> showIconPickerDialog() async {
+    final icon = await FlutterIconPicker.showIconPicker(
+      context,
+      iconPackMode: IconPack.fontAwesomeIcons,
+    );
+    if (icon != null) {
+      setState(() => _selectedIcon = icon);
+    }
   }
 
   @override
@@ -81,7 +87,6 @@ class _CreateFolderState extends State<CreateFolder> {
           children: [
             AnimatedHeadingText(
               transitionAnimation: widget.transitionAnimation,
-              headingTween: headingTween,
               theme: theme,
             ),
             Expanded(
@@ -115,23 +120,69 @@ class _CreateFolderState extends State<CreateFolder> {
                               child: TextFormField(
                                 controller: nameController,
                                 decoration: const InputDecoration(
-                                  border: UnderlineInputBorder(),
-                                  label: Text("Folder Name"),
+                                  border: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: ColorUtils.blueGrey,
+                                    ),
+                                  ),
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: ColorUtils.blueGrey,
+                                    ),
+                                  ),
+                                  hintText: "Folder Name",
                                 ),
                               ),
                             ),
                             ListTile(
-                              title: const Text("Icon"),
+                              contentPadding: const EdgeInsets.only(
+                                top: 20,
+                                left: 16,
+                                right: 16,
+                              ),
+                              onTap: showIconPickerDialog,
+                              title: Text(
+                                "Folder Icon",
+                                style: theme.textTheme.headline2,
+                              ),
                               trailing: FaIcon(_selectedIcon),
                             ),
+                            // Padding(
+                            //   padding: const EdgeInsets.symmetric(
+                            //     horizontal: 15,
+                            //   ),
+                            //   child: Divider(
+                            //     height: 0,
+                            //     thickness: 1,
+                            //     color: ColorUtils.blueGrey.withAlpha(150),
+                            //   ),
+                            // ),
                             ListTile(
-                              onTap: showColorPickerDialog,
-                              title: const Text("Icon colour"),
-                              trailing: Container(
-                                height: 50,
-                                width: 50,
-                                color: _selectedColor,
+                              contentPadding: const EdgeInsets.only(
+                                top: 10,
+                                left: 16,
+                                right: 16,
                               ),
+                              onTap: showColorPickerDialog,
+                              title: Text(
+                                "Icon Colour",
+                                style: theme.textTheme.headline2,
+                              ),
+                              subtitle: Text(
+                                ColorTools.nameThatColor(_selectedColor),
+                              ),
+                              trailing: Container(
+                                height: 35,
+                                width: 35,
+                                decoration: BoxDecoration(
+                                  color: _selectedColor,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {},
+                              child: Text("hello"),
                             ),
                           ],
                         ),
@@ -149,24 +200,27 @@ class _CreateFolderState extends State<CreateFolder> {
 }
 
 class AnimatedHeadingText extends StatelessWidget {
-  const AnimatedHeadingText({
+  AnimatedHeadingText({
     Key? key,
     required this.transitionAnimation,
-    required this.headingTween,
     required this.theme,
   }) : super(key: key);
 
   final Animation<double> transitionAnimation;
-  final Tween<Offset> headingTween;
   final ThemeData theme;
+
+  final headingTween = Tween<double>(
+    begin: 0,
+    end: 1,
+  );
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: transitionAnimation,
       builder: (context, child) {
-        return SlideTransition(
-          position: transitionAnimation.drive(headingTween),
+        return FadeTransition(
+          opacity: transitionAnimation.drive(headingTween),
           child: child,
         );
       },
