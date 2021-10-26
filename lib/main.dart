@@ -82,7 +82,7 @@ class MyApp extends StatelessWidget {
             pageBuilder: (context, animation, secondaryAnimation) {
               return FolderView(
                 transitionAnimation: animation,
-                tag: (settings.arguments as String?)!,
+                todoFolder: (settings.arguments as TodoFolder),
               );
             },
           );

@@ -124,10 +124,12 @@ class _CreateFolderState extends State<CreateFolder> {
     return BackgroundStackWithAnim(
       transitionAnimation: widget.transitionAnimation,
       content: ScaffoldBoilerPlate(
+        title: "New Folder",
         transitionAnimation: widget.transitionAnimation,
         tag: CREATE_FOLDER,
         content: SingleChildScrollView(
           child: Material(
+            color: ColorUtils.white,
             type: MaterialType.transparency,
             child: Form(
               key: _formKey,

@@ -20,7 +20,7 @@ class FolderListItem extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.of(context).pushNamed(
         FolderView.routeName,
-        arguments: todoFolder.name,
+        arguments: todoFolder,
       ),
       child: Hero(
         tag: todoFolder.name!,

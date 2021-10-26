@@ -15,11 +15,13 @@ class ScaffoldBoilerPlate extends StatelessWidget {
     required this.content,
     required this.transitionAnimation,
     required this.tag,
+    required this.title,
   }) : super(key: key);
 
   final Animation<double> transitionAnimation;
   final Widget content;
   final String tag;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +37,7 @@ class ScaffoldBoilerPlate extends StatelessWidget {
         children: [
           AnimatedHeadingText(
             transitionAnimation: transitionAnimation,
-            title: "New Folder",
+            title: title,
           ),
           Expanded(
             child: Hero(
