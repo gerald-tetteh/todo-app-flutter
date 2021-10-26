@@ -100,10 +100,11 @@ class MyApp extends StatelessWidget {
           );
         } else if (settings.name == CreateTodo.routeName) {
           return PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 300),
+            transitionDuration: const Duration(milliseconds: 700),
             pageBuilder: (context, animation, secondaryAnimation) {
               return CreateTodo(
                 transitionAnimation: animation,
+                folderKey: settings.arguments,
               );
             },
           );

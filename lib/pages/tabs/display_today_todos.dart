@@ -11,7 +11,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../pages/create_todo.dart';
 import '../../models/todo_folder.dart';
 import '../../utils/constants.dart';
-import '../../utils/color_utils.dart';
+import '../../widgets/list_divider.dart';
 
 class DisplayTodayTodos extends StatelessWidget {
   const DisplayTodayTodos({
@@ -67,8 +67,10 @@ class DisplayTodayTodos extends StatelessWidget {
                 left: (constarints.maxWidth / 2) -
                     ((0.05 * constarints.maxWidth) + 20),
                 child: ElevatedButton(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed(CreateTodo.routeName),
+                  onPressed: () => Navigator.of(context).pushNamed(
+                    CreateTodo.routeName,
+                    arguments: folderKey,
+                  ),
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
                     padding: EdgeInsets.all(
@@ -84,20 +86,6 @@ class DisplayTodayTodos extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class ListDivider extends StatelessWidget {
-  const ListDivider({
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Divider(
-      thickness: 1.3,
-      color: ColorUtils.blueGreyAlpha80,
     );
   }
 }

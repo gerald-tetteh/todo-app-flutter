@@ -16,6 +16,7 @@ import '../utils/color_utils.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/snackbar.dart';
 import '../widgets/scaffold_boiler_plate.dart';
+import '../widgets/text_field_form.dart';
 
 class CreateFolder extends StatefulWidget {
   const CreateFolder({
@@ -139,22 +140,9 @@ class _CreateFolderState extends State<CreateFolder> {
                     padding: const EdgeInsets.symmetric(
                       horizontal: 15,
                     ),
-                    child: TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        border: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: ColorUtils.blueGrey,
-                          ),
-                        ),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: ColorUtils.blueGrey,
-                          ),
-                        ),
-                        hintText: "Folder Name",
-                        labelText: "Folder Name",
-                      ),
+                    child: TextFieldForm(
+                      hintAndLabelText: "Folder Name",
+                      textController: _nameController!,
                       validator: (name) {
                         if (name!.isEmpty) {
                           return "Please enter a folder name";
