@@ -31,8 +31,10 @@ void main() async {
       iconDataCodePoint: FontAwesomeIcons.folderOpen.codePoint,
       iconColorValue: const Color(0xff52b2ae).value,
     );
-    folders.add(allTodosFolder);
-    folders.add(workTodosFolder);
+    try {
+      folders.add(allTodosFolder);
+      folders.add(workTodosFolder);
+    } catch (e) {}
     await todos.close();
   }
   // open box lazy
@@ -64,6 +66,10 @@ class MyApp extends StatelessWidget {
           headline2: TextStyle(
             color: ColorUtils.blueGrey,
             fontWeight: FontWeight.w500,
+            fontSize: 17,
+          ),
+          button: TextStyle(
+            color: ColorUtils.white,
             fontSize: 17,
           ),
         ),

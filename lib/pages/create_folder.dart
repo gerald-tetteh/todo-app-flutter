@@ -7,9 +7,15 @@ import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_iconpicker/flutter_iconpicker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
+import '../utils/constants.dart';
+import '../models/todo_folder.dart';
 import '../widgets/backgound_stack_with_anim.dart';
 import '../utils/color_utils.dart';
+import '../widgets/gradient_button.dart';
+import '../widgets/snackbar.dart';
+import '../widgets/scaffold_boiler_plate.dart';
 
 class CreateFolder extends StatefulWidget {
   const CreateFolder({
@@ -28,9 +34,14 @@ class _CreateFolderState extends State<CreateFolder> {
   var _selectedColor = ColorUtils.lightGreen;
   var _selectedIcon = FontAwesomeIcons.folderOpen;
   var _folderName = "";
+  var _isLoading = false;
 
-  TextEditingController? nameController;
+  TextEditingController? _nameController;
+  Box<TodoFolder>? _todoFolders;
 
+  final _formKey = GlobalKey<FormState>();
+
+  // show modal pickers
   Future<bool> showColorPickerDialog() async {
     return ColorPicker(
       onColorChanged: (color) => setState(() => _selectedColor = color),
@@ -58,16 +69,53 @@ class _CreateFolderState extends State<CreateFolder> {
     final icon = await FlutterIconPicker.showIconPicker(
       context,
       iconPackMode: IconPack.fontAwesomeIcons,
+      adaptiveDialog: true,
+      constraints: const BoxConstraints(
+        maxWidth: 390,
+        maxHeight: 550,
+      ),
     );
     if (icon != null) {
       setState(() => _selectedIcon = icon);
     }
   }
 
+  Future<void> submit() async {
+    setState(() => _isLoading = true);
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    _formKey.currentState!.save();
+    try {
+      final folder = TodoFolder(
+        name: _folderName,
+        iconColorValue: _selectedColor.value,
+        iconDataCodePoint: _selectedIcon.codePoint,
+      );
+      await _todoFolders?.add(folder);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: SnackbarContent(text: "Could not create folder"),
+        ),
+      );
+      return;
+    }
+    Navigator.of(context).pop();
+  }
+
   @override
   void initState() {
     super.initState();
-    nameController = TextEditingController(text: _folderName);
+    _nameController = TextEditingController(text: _folderName);
+    _todoFolders = Hive.box<TodoFolder>(TODOS_FOLDER);
+  }
+
+  @override
+  void dispose() {
+    _nameController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -75,164 +123,101 @@ class _CreateFolderState extends State<CreateFolder> {
     final theme = Theme.of(context);
     return BackgroundStackWithAnim(
       transitionAnimation: widget.transitionAnimation,
-      content: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          elevation: 0,
-        ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AnimatedHeadingText(
-              transitionAnimation: widget.transitionAnimation,
-              theme: theme,
-            ),
-            Expanded(
-              child: Hero(
-                tag: "create_folder",
-                child: Container(
-                  padding: const EdgeInsets.only(
-                    top: 25,
-                    left: 10,
-                    right: 10,
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: ColorUtils.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30),
+      content: ScaffoldBoilerPlate(
+        transitionAnimation: widget.transitionAnimation,
+        content: SingleChildScrollView(
+          child: Material(
+            type: MaterialType.transparency,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                    ),
+                    child: TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        border: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: ColorUtils.blueGrey,
+                          ),
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: ColorUtils.blueGrey,
+                          ),
+                        ),
+                        hintText: "Folder Name",
+                        labelText: "Folder Name",
+                      ),
+                      validator: (name) {
+                        if (name!.isEmpty) {
+                          return "Please enter a folder name";
+                        }
+                        try {
+                          _todoFolders?.values.firstWhere((folder) =>
+                              folder.name?.toLowerCase() == name.toLowerCase());
+                        } catch (error) {
+                          return null;
+                        }
+                        return "Folder name already exits";
+                      },
+                      onSaved: (name) => _folderName = name!,
                     ),
                   ),
-                  child: SingleChildScrollView(
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: Form(
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 15,
-                              ),
-                              child: TextFormField(
-                                controller: nameController,
-                                decoration: const InputDecoration(
-                                  border: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: ColorUtils.blueGrey,
-                                    ),
-                                  ),
-                                  enabledBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: ColorUtils.blueGrey,
-                                    ),
-                                  ),
-                                  hintText: "Folder Name",
-                                ),
-                              ),
-                            ),
-                            ListTile(
-                              contentPadding: const EdgeInsets.only(
-                                top: 20,
-                                left: 16,
-                                right: 16,
-                              ),
-                              onTap: showIconPickerDialog,
-                              title: Text(
-                                "Folder Icon",
-                                style: theme.textTheme.headline2,
-                              ),
-                              trailing: FaIcon(_selectedIcon),
-                            ),
-                            // Padding(
-                            //   padding: const EdgeInsets.symmetric(
-                            //     horizontal: 15,
-                            //   ),
-                            //   child: Divider(
-                            //     height: 0,
-                            //     thickness: 1,
-                            //     color: ColorUtils.blueGrey.withAlpha(150),
-                            //   ),
-                            // ),
-                            ListTile(
-                              contentPadding: const EdgeInsets.only(
-                                top: 10,
-                                left: 16,
-                                right: 16,
-                              ),
-                              onTap: showColorPickerDialog,
-                              title: Text(
-                                "Icon Colour",
-                                style: theme.textTheme.headline2,
-                              ),
-                              subtitle: Text(
-                                ColorTools.nameThatColor(_selectedColor),
-                              ),
-                              trailing: Container(
-                                height: 35,
-                                width: 35,
-                                decoration: BoxDecoration(
-                                  color: _selectedColor,
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {},
-                              child: Text("hello"),
-                            ),
-                          ],
-                        ),
+                  ListTile(
+                    contentPadding: const EdgeInsets.only(
+                      top: 20,
+                      left: 16,
+                      right: 16,
+                    ),
+                    onTap: showIconPickerDialog,
+                    title: Text(
+                      "Folder Icon",
+                      style: theme.textTheme.headline2,
+                    ),
+                    trailing: FaIcon(
+                      _selectedIcon,
+                      color: _selectedColor,
+                    ),
+                  ),
+                  ListTile(
+                    contentPadding: const EdgeInsets.only(
+                      top: 10,
+                      left: 16,
+                      right: 16,
+                    ),
+                    onTap: showColorPickerDialog,
+                    title: Text(
+                      "Icon Colour",
+                      style: theme.textTheme.headline2,
+                    ),
+                    subtitle: Text(
+                      ColorTools.nameThatColor(_selectedColor),
+                    ),
+                    trailing: Container(
+                      height: 35,
+                      width: 35,
+                      decoration: BoxDecoration(
+                        color: _selectedColor,
+                        borderRadius: BorderRadius.circular(5),
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(
+                    height: 40,
+                  ),
+                  GradientButton(
+                    submit: submit,
+                    text: "Create",
+                    isLoading: _isLoading,
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class AnimatedHeadingText extends StatelessWidget {
-  AnimatedHeadingText({
-    Key? key,
-    required this.transitionAnimation,
-    required this.theme,
-  }) : super(key: key);
-
-  final Animation<double> transitionAnimation;
-  final ThemeData theme;
-
-  final headingTween = Tween<double>(
-    begin: 0,
-    end: 1,
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: transitionAnimation,
-      builder: (context, child) {
-        return FadeTransition(
-          opacity: transitionAnimation.drive(headingTween),
-          child: child,
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.only(
-          left: 20,
-          bottom: 15,
-          top: 20,
-        ),
-        child: Text(
-          "New Folder",
-          style: theme.textTheme.headline1,
+          ),
         ),
       ),
     );
