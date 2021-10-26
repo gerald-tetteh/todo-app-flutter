@@ -10,17 +10,22 @@ class FolderListItem extends StatelessWidget {
     Key? key,
     required this.iconData,
     required this.todoFolder,
+    required this.index,
   }) : super(key: key);
 
   final IconDataSolid iconData;
   final TodoFolder todoFolder;
+  final int index;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Navigator.of(context).pushNamed(
         FolderView.routeName,
-        arguments: todoFolder,
+        arguments: {
+          "folder": todoFolder,
+          "index": index,
+        },
       ),
       child: Hero(
         tag: todoFolder.name!,

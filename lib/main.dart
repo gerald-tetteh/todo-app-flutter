@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import 'pages/folder_view.dart';
+import './pages/create_todo.dart';
+import './pages/folder_view.dart';
 import './pages/create_folder.dart';
 import './pages/home.dart';
 import './utils/color_utils.dart';
@@ -80,9 +81,11 @@ class MyApp extends StatelessWidget {
           return PageRouteBuilder(
             transitionDuration: const Duration(milliseconds: 300),
             pageBuilder: (context, animation, secondaryAnimation) {
+              final arguments = settings.arguments as Map<String, dynamic>;
               return FolderView(
                 transitionAnimation: animation,
-                todoFolder: (settings.arguments as TodoFolder),
+                todoFolder: arguments["folder"] as TodoFolder,
+                index: arguments["index"] as int,
               );
             },
           );
@@ -91,6 +94,15 @@ class MyApp extends StatelessWidget {
             transitionDuration: const Duration(milliseconds: 300),
             pageBuilder: (context, animation, secondaryAnimation) {
               return CreateFolder(
+                transitionAnimation: animation,
+              );
+            },
+          );
+        } else if (settings.name == CreateTodo.routeName) {
+          return PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 300),
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return CreateTodo(
                 transitionAnimation: animation,
               );
             },

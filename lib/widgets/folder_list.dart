@@ -58,6 +58,7 @@ class FolderList extends StatelessWidget {
                         return FolderListItem(
                           iconData: iconData,
                           todoFolder: todoFolder,
+                          index: index,
                         );
                       },
                     ),

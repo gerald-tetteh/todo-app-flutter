@@ -12,4 +12,13 @@ class ColorUtils {
   static const blueGrey = Color(0xff5b7693);
   static const white = Colors.white;
   static const black = Colors.black;
+
+  static final blueGreyAlpha80 = ColorUtils.blueGrey.withAlpha(80);
+
+  static const linearGradient = LinearGradient(
+    colors: [
+      ColorUtils.lightGreenDark,
+      ColorUtils.lightGreenLight,
+    ],
+  );
 }

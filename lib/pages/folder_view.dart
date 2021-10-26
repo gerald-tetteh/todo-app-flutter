@@ -6,20 +6,27 @@
 import 'package:flutter/material.dart';
 
 import '../utils/color_utils.dart';
+import '../utils/circle_tab_indicator.dart';
 import '../models/todo_folder.dart';
 import '../widgets/scaffold_boiler_plate.dart';
 import '../widgets/backgound_stack_with_anim.dart';
+
+import './tabs/display_month_todos.dart';
+import './tabs/display_week_todos.dart';
+import './tabs/display_today_todos.dart';
 
 class FolderView extends StatefulWidget {
   const FolderView({
     Key? key,
     this.transitionAnimation,
     required this.todoFolder,
+    required this.index,
   }) : super(key: key);
 
   static const routeName = "/all-todos";
   final Animation<double>? transitionAnimation;
   final TodoFolder todoFolder;
+  final int index;
 
   @override
   State<FolderView> createState() => _FolderViewState();
@@ -86,18 +93,24 @@ class _FolderViewState extends State<FolderView>
               children: [
                 TabBar(
                   tabs: _tabs,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                  ),
                   controller: _tabController,
+                  indicator: const CircleIndicator(
+                    color: ColorUtils.lightGreen,
+                    radius: 4,
+                  ),
+                  isScrollable: false,
                 ),
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
-                    children: const [
-                      Icon(Icons.directions_car),
-                      Icon(Icons.directions_transit),
-                      Icon(Icons.directions_bike),
+                    children: [
+                      DisplayTodayTodos(
+                        folderKey: widget.todoFolder.key,
+                        index: widget.index,
+                        todosLength: widget.todoFolder.todos?.length ?? 0,
+                      ),
+                      const DisplayWeekTodos(),
+                      const DisplayMonthTodos(),
                     ],
                   ),
                 ),
