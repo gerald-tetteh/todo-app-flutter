@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import './pages/all_todos.dart';
+import 'pages/folder_view.dart';
 import './pages/create_folder.dart';
 import './pages/home.dart';
 import './utils/color_utils.dart';
@@ -76,12 +76,13 @@ class MyApp extends StatelessWidget {
       ),
       home: const Home(),
       onGenerateRoute: (settings) {
-        if (settings.name == AllTodos.routeName) {
+        if (settings.name == FolderView.routeName) {
           return PageRouteBuilder(
             transitionDuration: const Duration(milliseconds: 300),
             pageBuilder: (context, animation, secondaryAnimation) {
-              return AllTodos(
+              return FolderView(
                 transitionAnimation: animation,
+                tag: (settings.arguments as String?)!,
               );
             },
           );

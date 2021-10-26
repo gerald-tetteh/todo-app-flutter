@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../pages/folder_view.dart';
 import '../models/todo_folder.dart';
 import '../utils/color_utils.dart';
 
@@ -17,7 +18,10 @@ class FolderListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => Navigator.of(context).pushNamed(
+        FolderView.routeName,
+        arguments: todoFolder.name,
+      ),
       child: Hero(
         tag: todoFolder.name!,
         child: Card(

@@ -14,10 +14,12 @@ class ScaffoldBoilerPlate extends StatelessWidget {
     Key? key,
     required this.content,
     required this.transitionAnimation,
+    required this.tag,
   }) : super(key: key);
 
   final Animation<double> transitionAnimation;
   final Widget content;
+  final String tag;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +39,7 @@ class ScaffoldBoilerPlate extends StatelessWidget {
           ),
           Expanded(
             child: Hero(
-              tag: "create_folder",
+              tag: tag,
               child: Container(
                 padding: const EdgeInsets.only(
                   top: 25,

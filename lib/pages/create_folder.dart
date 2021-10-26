@@ -125,6 +125,7 @@ class _CreateFolderState extends State<CreateFolder> {
       transitionAnimation: widget.transitionAnimation,
       content: ScaffoldBoilerPlate(
         transitionAnimation: widget.transitionAnimation,
+        tag: CREATE_FOLDER,
         content: SingleChildScrollView(
           child: Material(
             type: MaterialType.transparency,
