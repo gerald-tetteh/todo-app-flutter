@@ -3,10 +3,15 @@
  * Todo App
  * Create Todo
 */
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:todo_app/widgets/gradient_button.dart';
 
+import '../widgets/list_divider.dart';
 import '../models/todo.dart';
 import '../utils/color_utils.dart';
 import '../models/todo_folder.dart';
@@ -70,6 +75,59 @@ class _CreateTodoState extends State<CreateTodo> {
     }).toList();
   }
 
+  Future<void> showDateAndTimePicker() async {
+    final now = DateTime.now();
+    if (Platform.isIOS) {
+      await showCupertinoModalPopup(
+        context: context,
+        builder: (context) {
+          return CupertinoPickerContainer(
+            picker: CupertinoDatePicker(
+              mode: CupertinoDatePickerMode.date,
+              initialDateTime: now,
+              minimumDate: now,
+              maximumDate: DateTime(now.year + 10),
+              onDateTimeChanged: (date) => _alarmDateTime = date,
+            ),
+          );
+        },
+      );
+      if (_alarmDateTime != null) {
+        await showCupertinoModalPopup(
+          context: context,
+          builder: (context) {
+            return CupertinoPickerContainer(
+              picker: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.time,
+                initialDateTime: now,
+                minimumDate: now,
+                maximumDate: DateTime(now.year + 10),
+                onDateTimeChanged: (date) =>
+                    _alarmTimeOfDay = TimeOfDay.fromDateTime(date),
+              ),
+            );
+          },
+        );
+      }
+    } else {
+      _alarmDateTime = await showDatePicker(
+        context: context,
+        initialDate: now,
+        firstDate: now,
+        lastDate: DateTime(now.year + 10),
+      );
+      if (_alarmDateTime != null) {
+        _alarmTimeOfDay = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.fromDateTime(now),
+          builder: (context, child) {
+            return child!;
+          },
+        );
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -81,7 +139,15 @@ class _CreateTodoState extends State<CreateTodo> {
   }
 
   @override
+  void dispose() {
+    _titleController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BackgroundStackNoAnim(
       scale: 2,
       content: ScaffoldBoilerPlate(
@@ -102,6 +168,7 @@ class _CreateTodoState extends State<CreateTodo> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     DropdownButton<dynamic>(
+                      underline: const SizedBox(),
                       onChanged: (folderKey) {
                         setState(() => _dropDownValue = folderKey);
                       },
@@ -136,12 +203,112 @@ class _CreateTodoState extends State<CreateTodo> {
                       },
                       onSaved: (notes) => _notes = notes!,
                     ),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      value: _setAlarm,
+                      onChanged: (value) => setState(() => _setAlarm = value),
+                      activeColor: ColorUtils.lightGreen,
+                      title: Text(
+                        "Set Date",
+                        style: theme.textTheme.headline2,
+                      ),
+                    ),
+                    ListTile(
+                      onTap: showDateAndTimePicker,
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text("Alarm"),
+                      trailing: const Text("Fri, 31/01/20 2:00PM"),
+                    ),
+                    const ListDivider(),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text("Priority"),
+                      trailing: FaIcon(
+                        FontAwesomeIcons.chevronRight,
+                        size: 15,
+                        color: ColorUtils.blueGrey.withAlpha(180),
+                      ),
+                    ),
+                    const ListDivider(),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 25),
+                      child: Row(
+                        children: const [
+                          FaIcon(
+                            FontAwesomeIcons.plus,
+                            size: 15,
+                            color: ColorUtils.lightGreen,
+                          ),
+                          SizedBox(
+                            width: 15,
+                          ),
+                          Text("Add Image"),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 50,
+                        bottom: 10,
+                      ),
+                      child: Center(
+                        child: GradientButton(
+                          submit: () async {},
+                          text: "Create",
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class CupertinoPickerContainer extends StatelessWidget {
+  const CupertinoPickerContainer({
+    Key? key,
+    required this.picker,
+  }) : super(key: key);
+
+  final Widget picker;
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    return Container(
+      height: mediaQuery.size.height * 0.4,
+      width: double.infinity,
+      color: ColorUtils.white,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+            ),
+            child: Row(
+              children: [
+                const Spacer(),
+                TextButton(
+                  onPressed: Navigator.of(context).pop,
+                  child: const Text(
+                    "Done",
+                    style: TextStyle(
+                      color: ColorUtils.lightGreen,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: picker,
+          ),
+        ],
       ),
     );
   }

@@ -23,24 +23,32 @@ class TextFieldForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: textController,
-      decoration: InputDecoration(
-        border: const UnderlineInputBorder(
-          borderSide: BorderSide(
-            color: ColorUtils.blueGrey,
-          ),
-        ),
-        enabledBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(
-            color: ColorUtils.blueGrey,
-          ),
-        ),
-        hintText: hintAndLabelText,
-        labelText: hintAndLabelText,
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      validator: validator,
-      onSaved: onSaved,
+      child: TextFormField(
+        controller: textController,
+        decoration: InputDecoration(
+          border: const UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: ColorUtils.blueGrey,
+            ),
+          ),
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: ColorUtils.blueGrey,
+            ),
+          ),
+          labelText: hintAndLabelText,
+          labelStyle: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: ColorUtils.blueGrey.withAlpha(120),
+          ),
+        ),
+        validator: validator,
+        onSaved: onSaved,
+      ),
     );
   }
 }
