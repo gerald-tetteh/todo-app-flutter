@@ -77,6 +77,21 @@ class _CreateTodoState extends State<CreateTodo> {
     }).toList();
   }
 
+  void _buildDateString() {
+    if (_alarmTimeOfDay != null && _alarmDateTime != null) {
+      final dateToFormate = DateTime(
+        _alarmDateTime!.year,
+        _alarmDateTime!.month,
+        _alarmDateTime!.day,
+        _alarmTimeOfDay!.hour,
+        _alarmTimeOfDay!.minute,
+      );
+      setState(() {
+        _formtedDate = DateFormat.yMEd().add_jm().format(dateToFormate);
+      });
+    }
+  }
+
   Future<void> showDateAndTimePicker() async {
     final now = DateTime.now();
     if (Platform.isIOS) {
@@ -131,18 +146,47 @@ class _CreateTodoState extends State<CreateTodo> {
     _buildDateString();
   }
 
-  void _buildDateString() {
-    if (_alarmTimeOfDay != null && _alarmDateTime != null) {
-      final dateToFormate = DateTime(
-        _alarmDateTime!.year,
-        _alarmDateTime!.month,
-        _alarmDateTime!.day,
-        _alarmTimeOfDay!.hour,
-        _alarmTimeOfDay!.minute,
-      );
-      setState(() {
-        _formtedDate = DateFormat.yMEd().add_jm().format(dateToFormate);
-      });
+  Color _getPriorityColor() {
+    switch (_priority) {
+      case Priority.low:
+        return ColorUtils.lightGreen;
+      case Priority.medium:
+        return Colors.amber;
+      case Priority.high:
+        return Colors.red;
+      default:
+        return Colors.green;
+    }
+  }
+
+  // shows a pop up menu to select
+  // the priority of the todo (IOS)
+  Future<void> _showPriorityPopUp() async {
+    final result = await showCupertinoModalPopup<Priority?>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(context).pop(Priority.low),
+            child: const Text("Low Priority"),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(context).pop(Priority.medium),
+            child: const Text("Medium Priority"),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(context).pop(Priority.high),
+            child: const Text("High Priority"),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: Navigator.of(context).pop,
+          child: const Text("Cancel"),
+        ),
+      ),
+    );
+    if (result != null) {
+      setState(() => _priority = result);
     }
   }
 
@@ -239,13 +283,33 @@ class _CreateTodoState extends State<CreateTodo> {
                     ),
                     const ListDivider(),
                     ListTile(
+                      onTap: Platform.isIOS ? _showPriorityPopUp : () {},
                       contentPadding: EdgeInsets.zero,
                       title: const Text("Priority"),
-                      trailing: FaIcon(
-                        FontAwesomeIcons.chevronRight,
-                        size: 15,
-                        color: ColorUtils.blueGrey.withAlpha(180),
-                      ),
+                      trailing: Platform.isIOS
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                FaIcon(
+                                  FontAwesomeIcons.infoCircle,
+                                  color: _getPriorityColor(),
+                                  size: 15,
+                                ),
+                                const SizedBox(
+                                  width: 20,
+                                ),
+                                FaIcon(
+                                  FontAwesomeIcons.chevronRight,
+                                  size: 15,
+                                  color: ColorUtils.blueGrey.withAlpha(180),
+                                ),
+                              ],
+                            )
+                          : FaIcon(
+                              FontAwesomeIcons.chevronRight,
+                              size: 15,
+                              color: ColorUtils.blueGrey.withAlpha(180),
+                            ),
                     ),
                     const ListDivider(),
                     Padding(
