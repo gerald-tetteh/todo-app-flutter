@@ -9,6 +9,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:todo_app/widgets/gradient_button.dart';
 
 import '../widgets/list_divider.dart';
@@ -50,6 +51,7 @@ class _CreateTodoState extends State<CreateTodo> {
   bool _setAlarm = true;
   String _title = "";
   String _notes = "";
+  String _formtedDate = "Day, dd,mm,yy 0:00AM";
 
   void _buildFoldersDropDown() {
     _foldersDropDownItems = _folders.values.map<DropdownMenuItem>((folder) {
@@ -125,6 +127,22 @@ class _CreateTodoState extends State<CreateTodo> {
           },
         );
       }
+    }
+    _buildDateString();
+  }
+
+  void _buildDateString() {
+    if (_alarmTimeOfDay != null && _alarmDateTime != null) {
+      final dateToFormate = DateTime(
+        _alarmDateTime!.year,
+        _alarmDateTime!.month,
+        _alarmDateTime!.day,
+        _alarmTimeOfDay!.hour,
+        _alarmTimeOfDay!.minute,
+      );
+      setState(() {
+        _formtedDate = DateFormat.yMEd().add_jm().format(dateToFormate);
+      });
     }
   }
 
@@ -217,7 +235,7 @@ class _CreateTodoState extends State<CreateTodo> {
                       onTap: showDateAndTimePicker,
                       contentPadding: EdgeInsets.zero,
                       title: const Text("Alarm"),
-                      trailing: const Text("Fri, 31/01/20 2:00PM"),
+                      trailing: Text(_formtedDate),
                     ),
                     const ListDivider(),
                     ListTile(
