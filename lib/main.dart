@@ -1,3 +1,4 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -40,6 +41,20 @@ void main() async {
   }
   // open box lazy
   await Hive.openLazyBox<Todo>(TODOS);
+  AwesomeNotifications().initialize(
+    "resource://drawable/res_notification_icon",
+    [
+      NotificationChannel(
+        channelKey: SCHEDULE_TODO,
+        channelName: "TO DO Notifications",
+        defaultColor: ColorUtils.blueGrey,
+        importance: NotificationImportance.High,
+        channelShowBadge: true,
+        ledColor: ColorUtils.lightGreenDark,
+        enableVibration: true,
+      ),
+    ],
+  );
   runApp(const MyApp());
 }
 

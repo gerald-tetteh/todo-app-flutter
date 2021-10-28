@@ -4,14 +4,17 @@
  * Create Todo
 */
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:todo_app/widgets/gradient_button.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
+import '../widgets/snackbar.dart';
+import '../widgets/gradient_button.dart';
 import '../widgets/list_divider.dart';
 import '../models/todo.dart';
 import '../utils/color_utils.dart';
@@ -44,14 +47,16 @@ class _CreateTodoState extends State<CreateTodo> {
   late final TextEditingController _titleController;
   late final TextEditingController _notesController;
 
-  String imagePath = "";
   TimeOfDay? _alarmTimeOfDay;
   DateTime? _alarmDateTime;
   Priority _priority = Priority.low;
   bool _setAlarm = true;
   String _title = "";
   String _notes = "";
-  String _formtedDate = "Day, dd,mm,yy 0:00AM";
+  String _formtedDate = "Click to set";
+  File? _image;
+  bool isCameraImage = false;
+  bool isSaved = false;
 
   void _buildFoldersDropDown() {
     _foldersDropDownItems = _folders.values.map<DropdownMenuItem>((folder) {
@@ -190,6 +195,152 @@ class _CreateTodoState extends State<CreateTodo> {
     }
   }
 
+  Future<ImageSource?> _showImagePickerSourceDialog() async {
+    if (Platform.isIOS) {
+      return showCupertinoDialog<ImageSource>(
+        barrierDismissible: true,
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: const Text("Pick Image"),
+          content: const Text("Do you want to open the camera of gallary ?"),
+          actions: [
+            CupertinoDialogAction(
+              child: const Text('Camera'),
+              onPressed: () => Navigator.of(context).pop(ImageSource.camera),
+            ),
+            CupertinoDialogAction(
+              child: const Text('Gallery'),
+              onPressed: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return showDialog<ImageSource>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Pick Image"),
+          content: const Text("Do you want to open the camera of gallary ?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(ImageSource.camera),
+              child: const Text('Camera'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(ImageSource.gallery),
+              child: const Text('Gallery'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final imagePicker = ImagePicker();
+    final imageSource = await _showImagePickerSourceDialog();
+    if (imageSource != null) {
+      try {
+        final pickedImage = await imagePicker.pickImage(source: imageSource);
+        if (pickedImage != null) {
+          if (imageSource == ImageSource.camera) {
+            final baseName = path.basename(pickedImage.path);
+            final pickedImageFile = File(pickedImage.path);
+            final appDirectory = await getApplicationDocumentsDirectory();
+            final savedImageFile = await pickedImageFile
+                .copy(path.join(appDirectory.path, baseName));
+            if (_image != null && isCameraImage) {
+              await _image?.delete();
+              _image = null;
+            }
+            isCameraImage = true;
+            setState(() => _image = savedImageFile);
+          } else {
+            if (_image != null && isCameraImage) {
+              await _image?.delete();
+              _image = null;
+            }
+            isCameraImage = false;
+            setState(() => _image = File(pickedImage.path));
+          }
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: SnackbarContent(text: "Could read or save Image"),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<bool> _willPop() async {
+    bool result = true;
+    if (!isSaved) {
+      if (Platform.isIOS) {
+        await showCupertinoDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text("Exit without saving ?"),
+            content: const Text("Do you want to exit without saving ?"),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () {
+                  result = true;
+                  Navigator.of(context).pop();
+                },
+                child: const Text(
+                  "Exit",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+              CupertinoDialogAction(
+                onPressed: () {
+                  result = false;
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Cancel"),
+              ),
+            ],
+          ),
+        );
+      } else {
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text("Exit without saving ?"),
+            content: const Text("Do you want to exit without saving ?"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  result = true;
+                  Navigator.of(context).pop();
+                },
+                child: const Text(
+                  "Exit",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  result = false;
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Cancel"),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+    if (result && isCameraImage) {
+      await _image?.delete();
+    }
+    return result;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -212,140 +363,191 @@ class _CreateTodoState extends State<CreateTodo> {
     final theme = Theme.of(context);
     return BackgroundStackNoAnim(
       scale: 2,
-      content: ScaffoldBoilerPlate(
-        transitionAnimation: widget.transitionAnimation,
-        tag: "",
-        title: "New To do",
-        content: Padding(
-          padding: const EdgeInsets.only(
-            top: 15,
-            left: 15,
-            right: 15,
-          ),
-          child: ScaleTransition(
-            scale: widget.transitionAnimation,
-            child: Form(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    DropdownButton<dynamic>(
-                      underline: const SizedBox(),
-                      onChanged: (folderKey) {
-                        setState(() => _dropDownValue = folderKey);
-                      },
-                      iconSize: 15,
-                      iconDisabledColor: ColorUtils.blueGrey.withAlpha(170),
-                      items: _foldersDropDownItems,
-                      value: _dropDownValue,
-                      icon: const FaIcon(
-                        FontAwesomeIcons.chevronDown,
+      content: WillPopScope(
+        onWillPop: _willPop,
+        child: ScaffoldBoilerPlate(
+          transitionAnimation: widget.transitionAnimation,
+          tag: "",
+          title: "New To do",
+          content: Padding(
+            padding: const EdgeInsets.only(
+              top: 15,
+              left: 15,
+              right: 15,
+            ),
+            child: ScaleTransition(
+              scale: widget.transitionAnimation,
+              child: Form(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DropdownButton<dynamic>(
+                        underline: const SizedBox(),
+                        onChanged: (folderKey) {
+                          setState(() => _dropDownValue = folderKey);
+                        },
+                        iconSize: 15,
+                        iconDisabledColor: ColorUtils.blueGrey.withAlpha(170),
+                        items: _foldersDropDownItems,
+                        value: _dropDownValue,
+                        icon: const FaIcon(
+                          FontAwesomeIcons.chevronDown,
+                        ),
+                        borderRadius: BorderRadius.circular(5),
                       ),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    TextFieldForm(
-                      hintAndLabelText: "Title",
-                      textController: _titleController,
-                      validator: (title) {
-                        if (title!.isEmpty) {
-                          return "Please enter a title";
-                        }
-                        return null;
-                      },
-                      onSaved: (title) => _title = title!,
-                    ),
-                    TextFieldForm(
-                      hintAndLabelText: "Notes",
-                      textController: _notesController,
-                      validator: (notes) {
-                        if (notes!.isEmpty) {
-                          return "Please some notes";
-                        }
-                        return null;
-                      },
-                      onSaved: (notes) => _notes = notes!,
-                    ),
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      value: _setAlarm,
-                      onChanged: (value) => setState(() => _setAlarm = value),
-                      activeColor: ColorUtils.lightGreen,
-                      title: Text(
-                        "Set Date",
-                        style: theme.textTheme.headline2,
+                      TextFieldForm(
+                        hintAndLabelText: "Title",
+                        textController: _titleController,
+                        validator: (title) {
+                          if (title!.isEmpty) {
+                            return "Please enter a title";
+                          }
+                          return null;
+                        },
+                        onSaved: (title) => _title = title!,
                       ),
-                    ),
-                    ListTile(
-                      onTap: showDateAndTimePicker,
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text("Alarm"),
-                      trailing: Text(_formtedDate),
-                    ),
-                    const ListDivider(),
-                    ListTile(
-                      onTap: Platform.isIOS ? _showPriorityPopUp : () {},
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text("Priority"),
-                      trailing: Platform.isIOS
-                          ? Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                FaIcon(
-                                  FontAwesomeIcons.infoCircle,
-                                  color: _getPriorityColor(),
-                                  size: 15,
-                                ),
-                                const SizedBox(
-                                  width: 20,
-                                ),
-                                FaIcon(
-                                  FontAwesomeIcons.chevronRight,
-                                  size: 15,
-                                  color: ColorUtils.blueGrey.withAlpha(180),
-                                ),
-                              ],
-                            )
-                          : FaIcon(
-                              FontAwesomeIcons.chevronRight,
-                              size: 15,
-                              color: ColorUtils.blueGrey.withAlpha(180),
-                            ),
-                    ),
-                    const ListDivider(),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 25),
-                      child: Row(
-                        children: const [
-                          FaIcon(
-                            FontAwesomeIcons.plus,
-                            size: 15,
-                            color: ColorUtils.lightGreen,
-                          ),
-                          SizedBox(
-                            width: 15,
-                          ),
-                          Text("Add Image"),
-                        ],
+                      TextFieldForm(
+                        hintAndLabelText: "Notes",
+                        textController: _notesController,
+                        validator: (notes) {
+                          if (notes!.isEmpty) {
+                            return "Please some notes";
+                          }
+                          return null;
+                        },
+                        onSaved: (notes) => _notes = notes!,
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 50,
-                        bottom: 10,
-                      ),
-                      child: Center(
-                        child: GradientButton(
-                          submit: () async {},
-                          text: "Create",
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        value: _setAlarm,
+                        onChanged: (value) => setState(() => _setAlarm = value),
+                        activeColor: ColorUtils.lightGreen,
+                        title: Text(
+                          "Set Date",
+                          style: theme.textTheme.headline2,
                         ),
                       ),
-                    ),
-                  ],
+                      ListTile(
+                        onTap: showDateAndTimePicker,
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text("Alarm"),
+                        trailing: Text(_formtedDate),
+                      ),
+                      const ListDivider(),
+                      if (Platform.isAndroid) _buildPopupPriorityMenu(),
+                      if (Platform.isIOS) _buildPriorityTile(),
+                      const ListDivider(),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 25),
+                        child: GestureDetector(
+                          onTap: _pickImage,
+                          child: Row(
+                            children: const [
+                              FaIcon(
+                                FontAwesomeIcons.plus,
+                                size: 15,
+                                color: ColorUtils.lightGreen,
+                              ),
+                              SizedBox(
+                                width: 15,
+                              ),
+                              Text("Add Image"),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: AnimatedCrossFade(
+                          duration: const Duration(milliseconds: 700),
+                          crossFadeState: _image == null
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
+                          firstChild: const SizedBox(),
+                          secondChild: Container(
+                            margin: const EdgeInsets.only(top: 15),
+                            height: 250,
+                            width: 250,
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              image: _image != null
+                                  ? DecorationImage(
+                                      image: FileImage(_image!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: _image == null ? 20 : 10,
+                          bottom: 30,
+                        ),
+                        child: Center(
+                          child: GradientButton(
+                            submit: () async {},
+                            text: "Create",
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  PopupMenuButton<Priority> _buildPopupPriorityMenu() {
+    return PopupMenuButton<Priority>(
+      initialValue: _priority,
+      padding: EdgeInsets.zero,
+      onSelected: (priority) => setState(() => _priority = priority),
+      itemBuilder: (context) => <PopupMenuEntry<Priority>>[
+        const PopupMenuItem(
+          value: Priority.low,
+          child: Text("Low"),
+        ),
+        const PopupMenuItem(
+          value: Priority.medium,
+          child: Text("Medium"),
+        ),
+        const PopupMenuItem(
+          value: Priority.high,
+          child: Text("High"),
+        ),
+      ],
+      child: _buildPriorityTile(),
+    );
+  }
+
+  ListTile _buildPriorityTile() {
+    return ListTile(
+      onTap: Platform.isIOS ? _showPriorityPopUp : null,
+      contentPadding: EdgeInsets.zero,
+      title: const Text("Priority"),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FaIcon(
+            FontAwesomeIcons.infoCircle,
+            color: _getPriorityColor(),
+            size: 15,
+          ),
+          const SizedBox(
+            width: 20,
+          ),
+          FaIcon(
+            FontAwesomeIcons.chevronRight,
+            size: 15,
+            color: ColorUtils.blueGrey.withAlpha(180),
+          ),
+        ],
       ),
     );
   }

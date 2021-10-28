@@ -41,5 +41,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>The Todo app needs the camera to take a picture for your new to do.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>The Todo app needs to access your image library to pick on image for your new to do.</string>
 </dict>
 </plist>
