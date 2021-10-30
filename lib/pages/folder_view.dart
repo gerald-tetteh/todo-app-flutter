@@ -108,6 +108,7 @@ class _FolderViewState extends State<FolderView>
                         folderKey: widget.todoFolder.key,
                         index: widget.index,
                         todosLength: widget.todoFolder.todos?.length ?? 0,
+                        transition: widget.transitionAnimation!,
                       ),
                       const DisplayWeekTodos(),
                       const DisplayMonthTodos(),
