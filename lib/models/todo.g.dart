@@ -24,14 +24,15 @@ class TodoAdapter extends TypeAdapter<Todo> {
       dateCreated: fields[4] as DateTime?,
       setAlarm: fields[5] as bool,
       alarmDateTime: fields[7] as DateTime?,
-      alarmTimeOfDay: fields[6] as TimeOfDay?,
+      completed: fields[9] as bool,
+      notificationId: fields[10] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Todo obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.title)
       ..writeByte(1)
@@ -44,10 +45,12 @@ class TodoAdapter extends TypeAdapter<Todo> {
       ..write(obj.dateCreated)
       ..writeByte(5)
       ..write(obj.setAlarm)
-      ..writeByte(6)
-      ..write(obj.alarmTimeOfDay)
       ..writeByte(7)
-      ..write(obj.alarmDateTime);
+      ..write(obj.alarmDateTime)
+      ..writeByte(9)
+      ..write(obj.completed)
+      ..writeByte(10)
+      ..write(obj.notificationId);
   }
 
   @override

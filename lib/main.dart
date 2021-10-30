@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import './models/priority.dart';
 import './pages/create_todo.dart';
 import './pages/folder_view.dart';
 import './pages/create_folder.dart';
@@ -18,10 +19,11 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(TodoAdapter());
   Hive.registerAdapter(TodoFolderAdapter());
+  Hive.registerAdapter(PriorityAdapter());
   final folders = await Hive.openBox<TodoFolder>(TODOS_FOLDER);
+  final todos = await Hive.openBox<Todo>(TODOS);
   // add default folder; all for every instance of the app
   if (folders.isEmpty) {
-    final todos = await Hive.openBox<Todo>(TODOS);
     final allTodosFolder = TodoFolder(
       name: "All",
       iconDataCodePoint: FontAwesomeIcons.fileAlt.codePoint,
@@ -37,10 +39,7 @@ void main() async {
       folders.add(allTodosFolder);
       folders.add(workTodosFolder);
     } catch (e) {}
-    await todos.close();
   }
-  // open box lazy
-  await Hive.openLazyBox<Todo>(TODOS);
   AwesomeNotifications().initialize(
     "resource://drawable/res_notification_icon",
     [
@@ -51,7 +50,6 @@ void main() async {
         importance: NotificationImportance.High,
         channelShowBadge: true,
         ledColor: ColorUtils.lightGreenDark,
-        enableVibration: true,
       ),
     ],
   );
@@ -73,18 +71,28 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.white,
         ),
         fontFamily: "Roboto",
-        textTheme: const TextTheme(
-          headline1: TextStyle(
+        textTheme: TextTheme(
+          headline1: const TextStyle(
             color: ColorUtils.white,
             fontSize: 40,
             fontWeight: FontWeight.w500,
           ),
-          headline2: TextStyle(
+          headline2: const TextStyle(
             color: ColorUtils.blueGrey,
             fontWeight: FontWeight.w500,
             fontSize: 17,
           ),
-          button: TextStyle(
+          bodyText1: TextStyle(
+            color: Colors.black.withAlpha(170),
+            fontWeight: FontWeight.w500,
+            fontSize: 18,
+          ),
+          caption: TextStyle(
+            color: ColorUtils.blueGrey.withAlpha(120),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+          button: const TextStyle(
             color: ColorUtils.white,
             fontSize: 17,
           ),

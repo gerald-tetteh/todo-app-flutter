@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
+import '../helpers/notification_helper.dart';
 import '../widgets/snackbar.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/list_divider.dart';
@@ -23,6 +24,7 @@ import '../utils/constants.dart';
 import '../widgets/scaffold_boiler_plate.dart';
 import '../widgets/background_with_stack_no_anim.dart';
 import '../widgets/text_field_form.dart';
+import '../models/priority.dart';
 
 class CreateTodo extends StatefulWidget {
   const CreateTodo({
@@ -55,8 +57,11 @@ class _CreateTodoState extends State<CreateTodo> {
   String _notes = "";
   String _formtedDate = "Click to set";
   File? _image;
-  bool isCameraImage = false;
-  bool isSaved = false;
+  bool _isCameraImage = false;
+  bool _isSaved = false;
+  bool _isLoading = false;
+
+  final _formKey = GlobalKey<FormState>();
 
   void _buildFoldersDropDown() {
     _foldersDropDownItems = _folders.values.map<DropdownMenuItem>((folder) {
@@ -249,18 +254,18 @@ class _CreateTodoState extends State<CreateTodo> {
             final appDirectory = await getApplicationDocumentsDirectory();
             final savedImageFile = await pickedImageFile
                 .copy(path.join(appDirectory.path, baseName));
-            if (_image != null && isCameraImage) {
+            if (_image != null && _isCameraImage) {
               await _image?.delete();
               _image = null;
             }
-            isCameraImage = true;
+            _isCameraImage = true;
             setState(() => _image = savedImageFile);
           } else {
-            if (_image != null && isCameraImage) {
+            if (_image != null && _isCameraImage) {
               await _image?.delete();
               _image = null;
             }
-            isCameraImage = false;
+            _isCameraImage = false;
             setState(() => _image = File(pickedImage.path));
           }
         }
@@ -276,7 +281,7 @@ class _CreateTodoState extends State<CreateTodo> {
 
   Future<bool> _willPop() async {
     bool result = true;
-    if (!isSaved) {
+    if (!_isSaved) {
       if (Platform.isIOS) {
         await showCupertinoDialog<bool>(
           context: context,
@@ -335,10 +340,79 @@ class _CreateTodoState extends State<CreateTodo> {
         );
       }
     }
-    if (result && isCameraImage) {
+    if (result && _isCameraImage) {
       await _image?.delete();
     }
     return result;
+  }
+
+  Future<void> _save() async {
+    setState(() {
+      _isLoading = true;
+    });
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+    if (_formtedDate.contains("Click to set")) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: SnackbarContent(text: "Please set the date and time"),
+        ),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+    try {
+      _formKey.currentState!.save();
+      int? notificationId;
+      if (_setAlarm && _alarmDateTime != null && _alarmTimeOfDay != null) {
+        notificationId = await NotificationHelper.createNotification(
+          _alarmTimeOfDay!,
+          _alarmDateTime!,
+          _title,
+          imagePath: _image?.path,
+        );
+      }
+      DateTime dateTime = DateTime(
+        _alarmDateTime!.year,
+        _alarmDateTime!.month,
+        _alarmDateTime!.day,
+        _alarmTimeOfDay!.hour,
+        _alarmTimeOfDay!.minute,
+      );
+      final todo = Todo(
+        alarmDateTime: dateTime,
+        imagePath: _image?.path,
+        notes: _notes,
+        title: _title,
+        priority: _priority,
+        setAlarm: _setAlarm,
+        notificationId: notificationId,
+      );
+      final folder = _folders.get(_dropDownValue);
+      final todos = Hive.box<Todo>(TODOS);
+      await todos.add(todo);
+      folder?.todos?.add(todo);
+      setState(() {
+        _isSaved = true;
+        _isLoading = false;
+      });
+      Navigator.of(context).pop();
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: SnackbarContent(text: "An error occured"),
+        ),
+      );
+    }
   }
 
   @override
@@ -378,6 +452,7 @@ class _CreateTodoState extends State<CreateTodo> {
             child: ScaleTransition(
               scale: widget.transitionAnimation,
               child: Form(
+                key: _formKey,
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,7 +480,7 @@ class _CreateTodoState extends State<CreateTodo> {
                           }
                           return null;
                         },
-                        onSaved: (title) => _title = title!,
+                        onSaved: (title) => setState(() => _title = title!),
                       ),
                       TextFieldForm(
                         hintAndLabelText: "Notes",
@@ -416,7 +491,7 @@ class _CreateTodoState extends State<CreateTodo> {
                           }
                           return null;
                         },
-                        onSaved: (notes) => _notes = notes!,
+                        onSaved: (notes) => setState(() => _notes = notes!),
                       ),
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
@@ -424,14 +499,14 @@ class _CreateTodoState extends State<CreateTodo> {
                         onChanged: (value) => setState(() => _setAlarm = value),
                         activeColor: ColorUtils.lightGreen,
                         title: Text(
-                          "Set Date",
+                          "Set Notification",
                           style: theme.textTheme.headline2,
                         ),
                       ),
                       ListTile(
                         onTap: showDateAndTimePicker,
                         contentPadding: EdgeInsets.zero,
-                        title: const Text("Alarm"),
+                        title: const Text("Date and Time"),
                         trailing: Text(_formtedDate),
                       ),
                       const ListDivider(),
@@ -487,7 +562,8 @@ class _CreateTodoState extends State<CreateTodo> {
                         ),
                         child: Center(
                           child: GradientButton(
-                            submit: () async {},
+                            isLoading: _isLoading,
+                            submit: _save,
                             text: "Create",
                           ),
                         ),

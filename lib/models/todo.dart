@@ -4,12 +4,11 @@
  * Todo Model
 */
 
-import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
-part 'todo.g.dart';
+import './priority.dart';
 
-enum Priority { high, medium, low }
+part 'todo.g.dart';
 
 @HiveType(typeId: 2)
 class Todo extends HiveObject {
@@ -25,10 +24,12 @@ class Todo extends HiveObject {
   final DateTime dateCreated;
   @HiveField(5)
   final bool setAlarm;
-  @HiveField(6)
-  final TimeOfDay? alarmTimeOfDay;
   @HiveField(7)
   final DateTime? alarmDateTime;
+  @HiveField(9)
+  bool completed;
+  @HiveField(10)
+  final int? notificationId;
 
   Todo({
     this.title,
@@ -38,6 +39,11 @@ class Todo extends HiveObject {
     DateTime? dateCreated,
     this.setAlarm = false,
     this.alarmDateTime,
-    this.alarmTimeOfDay,
+    this.completed = false,
+    this.notificationId,
   }) : dateCreated = dateCreated ?? DateTime.now();
+
+  void toogleCompleted() {
+    completed = !completed;
+  }
 }
