@@ -7,14 +7,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/todo.dart';
-import '../../utils/color_utils.dart';
 import '../../pages/create_todo.dart';
 import '../../models/todo_folder.dart';
 import '../../utils/constants.dart';
 import '../../widgets/list_divider.dart';
+import '../../widgets/todo_list_item.dart';
 
 class DisplayTodayTodos extends StatefulWidget {
   const DisplayTodayTodos({
@@ -68,10 +67,15 @@ class _DisplayTodayTodosState extends State<DisplayTodayTodos> {
                             .listenable(keys: [widget.folderKey]),
                         builder: (context, box, _) {
                           final folder = box.values.elementAt(widget.index);
-                          final todos = folder.todos?.reversed;
+                          final todos = folder.todos
+                              ?.where((todo) =>
+                                  todo.alarmDateTime!.day == DateTime.now().day)
+                              .toList()
+                            ?..sort((a, b) =>
+                                a.alarmDateTime!.compareTo(b.alarmDateTime!));
                           return Padding(
                             padding: EdgeInsets.only(
-                              bottom: constarints.maxHeight * 0.05,
+                              bottom: constarints.maxHeight * 0.13,
                             ),
                             child: AnimatedBuilder(
                               animation: widget.transition,
@@ -123,147 +127,6 @@ class _DisplayTodayTodosState extends State<DisplayTodayTodos> {
           ),
         );
       },
-    );
-  }
-}
-
-class TodayTodoListItem extends StatelessWidget {
-  const TodayTodoListItem({
-    Key? key,
-    required this.todo,
-    required this.onTap,
-  }) : super(key: key);
-
-  final Todo todo;
-  final void Function() onTap;
-
-  // TODO: Add animation controller for animated text widget
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(15),
-          child: Row(
-            children: [
-              CircularCheckBox(
-                value: todo.completed,
-                onTap: onTap,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AnimatedLineThroughText(
-                      text: todo.title!,
-                      textStyle: theme.textTheme.bodyText1,
-                      value: todo.completed,
-                    ),
-                    const SizedBox(
-                      height: 5,
-                    ),
-                    Text(
-                      DateFormat.jm().format(
-                        todo.alarmDateTime!,
-                      ),
-                      style: theme.textTheme.caption,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const ListDivider(),
-      ],
-    );
-  }
-}
-
-class AnimatedLineThroughText extends StatelessWidget {
-  const AnimatedLineThroughText({
-    Key? key,
-    required this.text,
-    required this.textStyle,
-    required this.value,
-  }) : super(key: key);
-
-  final String text;
-  final bool value;
-  final TextStyle? textStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Text(
-          text,
-          style: textStyle,
-        ),
-        Container(
-          transform: Matrix4.identity()..scale(0.0, 1.0),
-          child: Text(
-            text,
-            style: textStyle?.copyWith(
-              decoration: TextDecoration.lineThrough,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class CircularCheckBox extends StatelessWidget {
-  const CircularCheckBox({
-    Key? key,
-    required this.value,
-    required this.onTap,
-  }) : super(key: key);
-
-  final bool value;
-  final Function() onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        curve: Curves.easeInOut,
-        duration: const Duration(milliseconds: 300),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: !value
-              ? Border.all(
-                  color: ColorUtils.blueGreyAlpha80,
-                  width: 1.9,
-                )
-              : null,
-        ),
-        width: 27,
-        height: 27,
-        child: Opacity(
-          opacity: value ? 1 : 0,
-          child: Container(
-            height: 27,
-            width: 27,
-            decoration: const BoxDecoration(
-              color: ColorUtils.lightGreen,
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: FaIcon(
-                FontAwesomeIcons.check,
-                color: ColorUtils.white,
-                size: 12,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

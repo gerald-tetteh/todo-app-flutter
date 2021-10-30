@@ -16,6 +16,7 @@ import 'package:path/path.dart' as path;
 import '../helpers/notification_helper.dart';
 import '../widgets/snackbar.dart';
 import '../widgets/gradient_button.dart';
+import '../widgets/cupertino_picker_container.dart';
 import '../widgets/list_divider.dart';
 import '../models/todo.dart';
 import '../utils/color_utils.dart';
@@ -398,6 +399,7 @@ class _CreateTodoState extends State<CreateTodo> {
       final todos = Hive.box<Todo>(TODOS);
       await todos.add(todo);
       folder?.todos?.add(todo);
+      folder?.save();
       setState(() {
         _isSaved = true;
         _isLoading = false;
@@ -622,51 +624,6 @@ class _CreateTodoState extends State<CreateTodo> {
             FontAwesomeIcons.chevronRight,
             size: 15,
             color: ColorUtils.blueGrey.withAlpha(180),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class CupertinoPickerContainer extends StatelessWidget {
-  const CupertinoPickerContainer({
-    Key? key,
-    required this.picker,
-  }) : super(key: key);
-
-  final Widget picker;
-
-  @override
-  Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    return Container(
-      height: mediaQuery.size.height * 0.4,
-      width: double.infinity,
-      color: ColorUtils.white,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-            ),
-            child: Row(
-              children: [
-                const Spacer(),
-                TextButton(
-                  onPressed: Navigator.of(context).pop,
-                  child: const Text(
-                    "Done",
-                    style: TextStyle(
-                      color: ColorUtils.lightGreen,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: picker,
           ),
         ],
       ),
