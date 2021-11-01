@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:todo_app/widgets/circular_check_box.dart';
 
 import '../../utils/color_utils.dart';
 import '../../models/todo_folder.dart';
@@ -57,7 +58,7 @@ class _DisplayWeekTodosState extends State<DisplayWeekTodos> {
                   .listenable(keys: [widget.folderKey]),
               builder: (context, box, _) {
                 final todos = box.get(widget.folderKey)?.todos;
-                return ListView.builder(
+                return ListView.separated(
                   itemCount: 7,
                   itemBuilder: (context, index) {
                     return WeekTodoListItem(
@@ -67,6 +68,7 @@ class _DisplayWeekTodosState extends State<DisplayWeekTodos> {
                       allTodos: todos,
                     );
                   },
+                  separatorBuilder: (context, index) => const ListDivider(),
                 );
               },
             ),
@@ -95,8 +97,12 @@ class WeekTodoListItem extends StatefulWidget {
   State<WeekTodoListItem> createState() => _WeekTodoListItemState();
 }
 
-class _WeekTodoListItemState extends State<WeekTodoListItem> {
+class _WeekTodoListItemState extends State<WeekTodoListItem>
+    with SingleTickerProviderStateMixin {
   bool _isOpen = false;
+  final _textWidgetKey = GlobalKey();
+  double _textWidth = 0.0;
+  late final AnimationController _controller;
 
   bool _compareDate(Todo todo) {
     final todoDate = todo.alarmDateTime;
@@ -129,59 +135,106 @@ class _WeekTodoListItemState extends State<WeekTodoListItem> {
 
   void _toggleOpen() {
     setState(() => _isOpen = !_isOpen);
+    if (_isOpen) {
+      _controller.forward();
+    } else {
+      _controller.reverse();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+      reverseDuration: const Duration(milliseconds: 500),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final todayTodos = widget.allTodos?.where(_compareDate);
     final theme = Theme.of(context);
-    // TODO: ficx gesture detecter and complete page
+    final mediaQuery = MediaQuery.of(context);
+    final width = mediaQuery.size.width - (70);
+    // TODO: fix gesture detecter and complete page
+    var weekDayText = Text(
+      _getTodayText(),
+      key: _textWidgetKey,
+      style: theme.textTheme.headline3,
+    );
+    Future.delayed(const Duration(seconds: 0), () {
+      if (mounted) {
+        setState(() {
+          _textWidth =
+              (_textWidgetKey.currentContext?.findRenderObject() as RenderBox)
+                  .size
+                  .width;
+        });
+      }
+    });
+    final _offsetWidth = (width - _textWidth) / 2;
     return GestureDetector(
       onTap: _toggleOpen,
       child: AnimatedContainer(
-        duration: const Duration(seconds: 1),
+        padding: const EdgeInsets.all(15),
+        duration: const Duration(milliseconds: 500),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(15),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: _isOpen
-                    ? MainAxisAlignment.center
-                    : MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _getTodayText(),
-                    style: theme.textTheme.bodyText1,
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Transform.translate(
+                  offset: Offset(_offsetWidth * _controller.value, 0.0),
+                  child: weekDayText,
+                ),
+                AnimatedCrossFade(
+                  duration: const Duration(milliseconds: 300),
+                  firstChild: const FaIcon(
+                    FontAwesomeIcons.plus,
+                    color: ColorUtils.lightGreen,
+                    size: 14,
                   ),
-                  AnimatedCrossFade(
-                    duration: const Duration(milliseconds: 300),
-                    firstChild: const FaIcon(
-                      FontAwesomeIcons.plus,
-                      color: ColorUtils.lightGreen,
-                      size: 14,
-                    ),
-                    secondChild: const FaIcon(
-                      FontAwesomeIcons.minus,
-                      color: ColorUtils.lightGreen,
-                      size: 14,
-                    ),
-                    crossFadeState: _isOpen
-                        ? CrossFadeState.showSecond
-                        : CrossFadeState.showFirst,
+                  secondChild: const FaIcon(
+                    FontAwesomeIcons.minus,
+                    color: ColorUtils.lightGreen,
+                    size: 14,
                   ),
-                ],
-              ),
+                  crossFadeState: _isOpen
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                ),
+              ],
             ),
             AnimatedCrossFade(
-              firstChild: const SizedBox(),
-              secondChild: Column(),
-              duration: const Duration(seconds: 1),
+              firstChild: const SizedBox(
+                width: double.infinity,
+              ),
+              secondChild: Column(
+                children: todayTodos
+                        ?.map(
+                          (todo) => Row(
+                            children: [
+                              CircularCheckBox(
+                                onTap: () {},
+                                value: true,
+                              ),
+                              Text(todo.title!),
+                              const Spacer(),
+                              Text("${todo.alarmDateTime!}"),
+                            ],
+                          ),
+                        )
+                        .toList() ??
+                    [],
+              ),
+              duration: const Duration(milliseconds: 500),
               crossFadeState: _isOpen
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
             ),
-            const ListDivider(),
           ],
         ),
       ),
