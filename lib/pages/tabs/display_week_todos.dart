@@ -168,7 +168,6 @@ class _WeekTodoListItemState extends State<WeekTodoListItem>
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final width = mediaQuery.size.width - (70);
-    // TODO: fix gesture detecter and complete page
     var weekDayText = Text(
       _getTodayText(),
       key: _textWidgetKey,

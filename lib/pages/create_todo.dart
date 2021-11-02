@@ -78,7 +78,13 @@ class _CreateTodoState extends State<CreateTodo> {
             const SizedBox(
               width: 10,
             ),
-            Text(folder.name!),
+            SizedBox(
+              child: Text(
+                folder.name!,
+                overflow: TextOverflow.ellipsis,
+              ),
+              width: 100,
+            ),
             const SizedBox(
               width: 10,
             ),

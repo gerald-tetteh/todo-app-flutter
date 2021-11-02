@@ -40,6 +40,8 @@ class FolderListItem extends StatelessWidget {
             padding: const EdgeInsets.all(17),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -58,13 +60,13 @@ class FolderListItem extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Spacer(),
                 Text(
                   "${todoFolder.name}",
                   style: const TextStyle(
                     color: ColorUtils.black,
                     fontWeight: FontWeight.w500,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
