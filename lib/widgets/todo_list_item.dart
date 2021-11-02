@@ -35,6 +35,7 @@ class TodayTodoListItem extends StatelessWidget {
                 value: todo.completed,
                 onTap: onTap,
               ),
+              // expanded prevents overflow error.
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 20),

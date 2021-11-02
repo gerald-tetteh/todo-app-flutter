@@ -92,6 +92,11 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.w500,
             fontSize: 18,
           ),
+          bodyText2: TextStyle(
+            color: Colors.black.withAlpha(170),
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
+          ),
           caption: TextStyle(
             color: ColorUtils.blueGrey.withAlpha(120),
             fontSize: 15,

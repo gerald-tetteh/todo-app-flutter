@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:todo_app/widgets/circular_check_box.dart';
 
 import '../../utils/color_utils.dart';
@@ -111,6 +112,15 @@ class _WeekTodoListItemState extends State<WeekTodoListItem>
         todoDate?.year == widget.year;
   }
 
+  void toogleCompleted(Todo todo) {
+    setState(() => todo.toogleCompleted());
+    todo.save().onError((error, stackTrace) => todo.toogleCompleted());
+  }
+
+  String _buildTimeString(Todo todo) {
+    return DateFormat.jm().format(todo.alarmDateTime!);
+  }
+
   String _getTodayText() {
     final currentDay = DateTime(widget.year, widget.month, widget.day);
     switch (currentDay.weekday) {
@@ -209,22 +219,49 @@ class _WeekTodoListItemState extends State<WeekTodoListItem>
               ],
             ),
             AnimatedCrossFade(
-              firstChild: const SizedBox(
-                width: double.infinity,
-              ),
+              firstChild: const SizedBox(),
               secondChild: Column(
                 children: todayTodos
                         ?.map(
-                          (todo) => Row(
-                            children: [
-                              CircularCheckBox(
-                                onTap: () {},
-                                value: true,
-                              ),
-                              Text(todo.title!),
-                              const Spacer(),
-                              Text("${todo.alarmDateTime!}"),
-                            ],
+                          (todo) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 5,
+                            ),
+                            child: Row(
+                              children: [
+                                CircularCheckBox(
+                                  onTap: () => toogleCompleted(todo),
+                                  value: todo.completed,
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                // expanded prevents overflow error.
+                                Expanded(
+                                  child: Text(
+                                    todo.title!,
+                                    style: theme.textTheme.bodyText2?.copyWith(
+                                      decoration: todo.completed
+                                          ? TextDecoration.lineThrough
+                                          : TextDecoration.none,
+                                      color: todo.completed
+                                          ? ColorUtils.blueGreyAlpha80
+                                          : null,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text(
+                                  _buildTimeString(todo),
+                                  style: theme.textTheme.caption?.copyWith(
+                                    color: ColorUtils.black.withAlpha(90),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         )
                         .toList() ??

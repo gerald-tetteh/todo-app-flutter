@@ -128,8 +128,6 @@ class _CreateTodoState extends State<CreateTodo> {
               picker: CupertinoDatePicker(
                 mode: CupertinoDatePickerMode.time,
                 initialDateTime: now,
-                minimumDate: now,
-                maximumDate: DateTime(now.year + 10),
                 onDateTimeChanged: (date) =>
                     _alarmTimeOfDay = TimeOfDay.fromDateTime(date),
               ),
