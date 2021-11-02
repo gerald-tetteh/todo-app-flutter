@@ -4,30 +4,20 @@
  * Display Week Todos
 */
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:intl/intl.dart';
-import 'package:todo_app/widgets/circular_check_box.dart';
 
-import '../../utils/color_utils.dart';
 import '../../models/todo_folder.dart';
-import '../../models/todo.dart';
 import '../../utils/constants.dart';
 import '../../widgets/list_divider.dart';
+import '../../widgets/week_todo_list_item.dart';
 
-class DisplayWeekTodos extends StatefulWidget {
-  const DisplayWeekTodos({
+class DisplayWeekTodos extends StatelessWidget {
+  DisplayWeekTodos({
     Key? key,
     required this.folderKey,
   }) : super(key: key);
 
   final dynamic folderKey;
-
-  @override
-  State<DisplayWeekTodos> createState() => _DisplayWeekTodosState();
-}
-
-class _DisplayWeekTodosState extends State<DisplayWeekTodos> {
   final _today = DateTime.now().day;
   final _month = DateTime.now().month;
   final _year = DateTime.now().year;
@@ -41,13 +31,8 @@ class _DisplayWeekTodosState extends State<DisplayWeekTodos> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _buildWeekDayList();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    _buildWeekDayList();
     return Padding(
       padding: const EdgeInsets.only(top: 30),
       child: Column(
@@ -56,9 +41,9 @@ class _DisplayWeekTodosState extends State<DisplayWeekTodos> {
           Expanded(
             child: ValueListenableBuilder<Box<TodoFolder>>(
               valueListenable: Hive.box<TodoFolder>(TODOS_FOLDER)
-                  .listenable(keys: [widget.folderKey]),
+                  .listenable(keys: [folderKey]),
               builder: (context, box, _) {
-                final todos = box.get(widget.folderKey)?.todos;
+                final todos = box.get(folderKey)?.todos;
                 return ListView.separated(
                   itemCount: 7,
                   itemBuilder: (context, index) {
@@ -75,204 +60,6 @@ class _DisplayWeekTodosState extends State<DisplayWeekTodos> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class WeekTodoListItem extends StatefulWidget {
-  const WeekTodoListItem({
-    Key? key,
-    required this.day,
-    required this.month,
-    required this.year,
-    required this.allTodos,
-  }) : super(key: key);
-
-  final int day;
-  final int month;
-  final int year;
-  final HiveList<Todo>? allTodos;
-
-  @override
-  State<WeekTodoListItem> createState() => _WeekTodoListItemState();
-}
-
-class _WeekTodoListItemState extends State<WeekTodoListItem>
-    with SingleTickerProviderStateMixin {
-  bool _isOpen = false;
-  final _textWidgetKey = GlobalKey();
-  double _textWidth = 0.0;
-  late final AnimationController _controller;
-
-  bool _compareDate(Todo todo) {
-    final todoDate = todo.alarmDateTime;
-    return todoDate?.day == widget.day &&
-        todoDate?.month == widget.month &&
-        todoDate?.year == widget.year;
-  }
-
-  void toogleCompleted(Todo todo) {
-    setState(() => todo.toogleCompleted());
-    todo.save().onError((error, stackTrace) => todo.toogleCompleted());
-  }
-
-  String _buildTimeString(Todo todo) {
-    return DateFormat.jm().format(todo.alarmDateTime!);
-  }
-
-  String _getTodayText() {
-    final currentDay = DateTime(widget.year, widget.month, widget.day);
-    switch (currentDay.weekday) {
-      case DateTime.monday:
-        return "Monday";
-      case DateTime.tuesday:
-        return "Tuesday";
-      case DateTime.wednesday:
-        return "Wednesday";
-      case DateTime.thursday:
-        return "Thursday";
-      case DateTime.friday:
-        return "Friday";
-      case DateTime.saturday:
-        return "Saturday";
-      case DateTime.sunday:
-        return "Sunday";
-      default:
-        return "";
-    }
-  }
-
-  void _toggleOpen() {
-    setState(() => _isOpen = !_isOpen);
-    if (_isOpen) {
-      _controller.forward();
-    } else {
-      _controller.reverse();
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-      reverseDuration: const Duration(milliseconds: 500),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final todayTodos = widget.allTodos?.where(_compareDate);
-    final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
-    final width = mediaQuery.size.width - (70);
-    var weekDayText = Text(
-      _getTodayText(),
-      key: _textWidgetKey,
-      style: theme.textTheme.headline3,
-    );
-    Future.delayed(const Duration(seconds: 0), () {
-      if (mounted) {
-        setState(() {
-          _textWidth =
-              (_textWidgetKey.currentContext?.findRenderObject() as RenderBox)
-                  .size
-                  .width;
-        });
-      }
-    });
-    final _offsetWidth = (width - _textWidth) / 2;
-    return GestureDetector(
-      onTap: _toggleOpen,
-      child: AnimatedContainer(
-        padding: const EdgeInsets.all(15),
-        duration: const Duration(milliseconds: 500),
-        child: Column(
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Transform.translate(
-                  offset: Offset(_offsetWidth * _controller.value, 0.0),
-                  child: weekDayText,
-                ),
-                AnimatedCrossFade(
-                  duration: const Duration(milliseconds: 300),
-                  firstChild: const FaIcon(
-                    FontAwesomeIcons.plus,
-                    color: ColorUtils.lightGreen,
-                    size: 14,
-                  ),
-                  secondChild: const FaIcon(
-                    FontAwesomeIcons.minus,
-                    color: ColorUtils.lightGreen,
-                    size: 14,
-                  ),
-                  crossFadeState: _isOpen
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                ),
-              ],
-            ),
-            AnimatedCrossFade(
-              firstChild: const SizedBox(),
-              secondChild: Column(
-                children: todayTodos
-                        ?.map(
-                          (todo) => Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 5,
-                            ),
-                            child: Row(
-                              children: [
-                                CircularCheckBox(
-                                  onTap: () => toogleCompleted(todo),
-                                  value: todo.completed,
-                                ),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                // expanded prevents overflow error.
-                                Expanded(
-                                  child: Text(
-                                    todo.title!,
-                                    style: theme.textTheme.bodyText2?.copyWith(
-                                      decoration: todo.completed
-                                          ? TextDecoration.lineThrough
-                                          : TextDecoration.none,
-                                      color: todo.completed
-                                          ? ColorUtils.blueGreyAlpha80
-                                          : null,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                Text(
-                                  _buildTimeString(todo),
-                                  style: theme.textTheme.caption?.copyWith(
-                                    color: ColorUtils.black.withAlpha(90),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                        .toList() ??
-                    [],
-              ),
-              duration: const Duration(milliseconds: 500),
-              crossFadeState: _isOpen
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-            ),
-          ],
-        ),
       ),
     );
   }
