@@ -396,8 +396,17 @@ class _CreateTodoState extends State<CreateTodo> {
       final folder = _folders.get(_dropDownValue);
       final todos = Hive.box<Todo>(TODOS);
       await todos.add(todo);
+      if (folder?.todos == null) {
+        folder?.todos = HiveList(todos);
+        folder?.todos?.clear();
+      }
       folder?.todos?.add(todo);
-      folder?.save();
+      await folder?.save();
+      if (_dropDownValue != ALL_TODOS_KEY) {
+        final allTodosFolder = _folders.get(ALL_TODOS_KEY);
+        allTodosFolder?.todos?.add(todo);
+        await allTodosFolder?.save();
+      }
       setState(() {
         _isSaved = true;
         _isLoading = false;

@@ -36,8 +36,8 @@ void main() async {
       iconColorValue: const Color(0xff52b2ae).value,
     );
     try {
-      folders.add(allTodosFolder);
-      folders.add(workTodosFolder);
+      await folders.put(ALL_TODOS_KEY, allTodosFolder);
+      await folders.add(workTodosFolder);
     } catch (e) {}
   }
   AwesomeNotifications().initialize(
