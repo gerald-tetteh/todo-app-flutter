@@ -10,6 +10,7 @@ import '../../models/todo_folder.dart';
 import '../../utils/constants.dart';
 import '../../widgets/list_divider.dart';
 import '../../widgets/week_todo_list_item.dart';
+import '../../widgets/display_todos_boiler_plate.dart';
 
 class DisplayWeekTodos extends StatelessWidget {
   DisplayWeekTodos({
@@ -33,33 +34,25 @@ class DisplayWeekTodos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     _buildWeekDayList();
-    return Padding(
-      padding: const EdgeInsets.only(top: 30),
-      child: Column(
-        children: [
-          const ListDivider(),
-          Expanded(
-            child: ValueListenableBuilder<Box<TodoFolder>>(
-              valueListenable: Hive.box<TodoFolder>(TODOS_FOLDER)
-                  .listenable(keys: [folderKey]),
-              builder: (context, box, _) {
-                final todos = box.get(folderKey)?.todos;
-                return ListView.separated(
-                  itemCount: 7,
-                  itemBuilder: (context, index) {
-                    return WeekTodoListItem(
-                      month: _month,
-                      year: _year,
-                      day: _weekDaysList[index],
-                      allTodos: todos,
-                    );
-                  },
-                  separatorBuilder: (context, index) => const ListDivider(),
-                );
-              },
-            ),
-          ),
-        ],
+    return DisplayTodosBoilerPlate(
+      child: ValueListenableBuilder<Box<TodoFolder>>(
+        valueListenable:
+            Hive.box<TodoFolder>(TODOS_FOLDER).listenable(keys: [folderKey]),
+        builder: (context, box, _) {
+          final todos = box.get(folderKey)?.todos;
+          return ListView.separated(
+            itemCount: 7,
+            itemBuilder: (context, index) {
+              return WeekTodoListItem(
+                month: _month,
+                year: _year,
+                day: _weekDaysList[index],
+                allTodos: todos,
+              );
+            },
+            separatorBuilder: (context, index) => const ListDivider(),
+          );
+        },
       ),
     );
   }

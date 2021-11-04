@@ -113,7 +113,9 @@ class _FolderViewState extends State<FolderView>
                       DisplayWeekTodos(
                         folderKey: widget.todoFolder.key,
                       ),
-                      const DisplayMonthTodos(),
+                      DisplayMonthTodos(
+                        folderKey: widget.todoFolder.key,
+                      ),
                     ],
                   ),
                 ),

@@ -12,19 +12,23 @@ import '../utils/color_utils.dart';
 
 import './circular_check_box.dart';
 
+enum TodoListType { week, month }
+
 class ExpantionTodoList extends StatefulWidget {
   const ExpantionTodoList({
     Key? key,
-    required this.day,
+    this.day = 0,
     required this.month,
     required this.todos,
     required this.year,
+    this.listType = TodoListType.week,
   }) : super(key: key);
 
   final Iterable<Todo>? todos;
   final int day;
   final int month;
   final int year;
+  final TodoListType listType;
 
   @override
   _ExpantionTodoListState createState() => _ExpantionTodoListState();
@@ -66,8 +70,10 @@ class _ExpantionTodoListState extends State<ExpantionTodoList>
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final width = mediaQuery.size.width - (70);
-    var weekDayText = Text(
-      getTodayText(widget.year, widget.month, widget.day),
+    var titleText = Text(
+      widget.listType == TodoListType.week
+          ? getTodayText(widget.year, widget.month, widget.day)
+          : getMonthText(widget.month),
       key: _textWidgetKey,
       style: theme.textTheme.headline3,
     );
@@ -96,7 +102,7 @@ class _ExpantionTodoListState extends State<ExpantionTodoList>
               children: [
                 Transform.translate(
                   offset: Offset(_offsetWidth * _controller.value, 0.0),
-                  child: weekDayText,
+                  child: titleText,
                 ),
                 AnimatedCrossFade(
                   duration: const Duration(milliseconds: 300),
